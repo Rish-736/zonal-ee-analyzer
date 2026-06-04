@@ -1,0 +1,267 @@
+# Freightliner Cascadia (Class 8 truck) — Representative E/E configuration
+# ECU list sourced from DTNA Service Bulletin SS-1033423 (NHTSA public database)
+# Physical zone groupings based on Cascadia electrical system architecture
+# Used for: Zonal E/E Architecture Analyzer (zonal-ee-analyzer project)
+
+metadata:
+  truck_model: "Freightliner Cascadia 126 (2020)"
+  total_ecus: 22
+  source: "DTNA SS-1033423, NHTSA public database"
+  notes: "Representative configuration. Wire lengths are estimates based on truck dimensions."
+
+# Zone-to-zone distances (meters) — used to estimate wire length in legacy architecture
+# A Cascadia 126 is approx. 8.5m from front bumper to back of cab
+zone_distances:
+  powertrain_to_chassis: 3.0    # engine bay to mid-frame
+  chassis_to_cab: 2.5           # mid-frame to cab floor
+  cab_to_front: 1.5             # cab interior to front fascia
+  powertrain_to_cab: 5.5        # longest run: engine to driver
+  powertrain_to_front: 7.0      # engine bay to front bumper area
+  chassis_to_front: 4.5         # mid-frame to front
+  cab_to_chassis: 2.5           # same as chassis_to_cab
+
+zones:
+  - name: "Powertrain Zone"
+    id: PTZ
+    location: "Engine compartment and firewall area"
+    zone_controller: "ZC-PT"   # proposed zone controller for zonal architecture
+    ecus:
+      - id: MCM
+        name: "Motor Control Module"
+        j1939_sa: 1
+        function: "Controls Detroit DD13/DD15 engine combustion, fuel injection, emissions"
+        local_wire_length_m: 0.5   # short stub to zone controller if zonal
+
+      - id: ACM
+        name: "Aftertreatment Control Module"
+        j1939_sa: 61
+        function: "Controls DEF injection, DPF regeneration, SCR system"
+        local_wire_length_m: 0.8
+
+      - id: CPC
+        name: "Common Powertrain Controller"
+        j1939_sa: 0
+        function: "Master engine coordinator, interfaces powertrain CAN to chassis CAN"
+        local_wire_length_m: 0.6
+
+      - id: TCM
+        name: "Transmission Control Module"
+        j1939_sa: 3
+        function: "Controls Detroit DT12 automated manual transmission"
+        local_wire_length_m: 1.2   # slightly longer, mounted near gearbox
+
+  - name: "Chassis Zone"
+    id: CHZ
+    location: "Frame rails, mid-vehicle underframe"
+    zone_controller: "ZC-CH"
+    ecus:
+      - id: ABS
+        name: "ABS / Stability Controller"
+        j1939_sa: 11
+        function: "Anti-lock braking, electronic stability control, traction control"
+        local_wire_length_m: 1.0
+
+      - id: ECAS
+        name: "Electronic Controlled Air Suspension"
+        j1939_sa: 49
+        function: "Manages rear air bag suspension leveling and height control"
+        local_wire_length_m: 1.5
+
+      - id: TPMS
+        name: "Tire Pressure Monitoring System"
+        j1939_sa: 58
+        function: "Monitors tire pressure across all axles wirelessly"
+        local_wire_length_m: 1.0
+
+      - id: SAM_CHASSIS
+        name: "Signal Acquisition Module — Chassis"
+        j1939_sa: 74
+        function: "Manages chassis-side I/O: lights, sensors, relays along frame"
+        local_wire_length_m: 0.5
+
+  - name: "Cab Zone"
+    id: CBZ
+    location: "Driver cab interior, dash, and sleeper"
+    zone_controller: "ZC-CAB"
+    ecus:
+      - id: ICU
+        name: "Instrument Cluster Unit"
+        j1939_sa: 23
+        function: "Driver display: speed, RPM, warnings, fuel, temp gauges"
+        local_wire_length_m: 0.5
+
+      - id: SAM_CAB
+        name: "Signal Acquisition Module — Cab"
+        j1939_sa: 37
+        function: "Manages cab-side I/O: switches, interior lights, door signals"
+        local_wire_length_m: 0.5
+
+      - id: CGW
+        name: "Central Gateway"
+        j1939_sa: 42
+        function: "Bridges Powertrain CAN, Chassis CAN, Cabin CAN — network hub"
+        local_wire_length_m: 0.3
+
+      - id: FCU
+        name: "HVAC Front Climate Control Unit"
+        j1939_sa: 25
+        function: "Controls cab heating, ventilation, and air conditioning"
+        local_wire_length_m: 0.8
+
+      - id: SRS
+        name: "SRS Airbag Controller"
+        j1939_sa: 127
+        function: "Manages airbag deployment and seatbelt pretensioners"
+        local_wire_length_m: 0.6
+
+      - id: MSF
+        name: "Modular Switch Field"
+        j1939_sa: 51
+        function: "Steering column and dashboard switch inputs"
+        local_wire_length_m: 0.4
+
+      - id: PARKSMART
+        name: "ParkSmart Climate Control (Sleeper)"
+        j1939_sa: 61
+        function: "Sleeper HVAC and APU climate management"
+        local_wire_length_m: 1.5
+
+      - id: DCMD
+        name: "Door Controller — Driver Side"
+        j1939_sa: 236
+        function: "Window, mirror, lock, door-ajar for driver door"
+        local_wire_length_m: 1.2
+
+      - id: DCMP
+        name: "Door Controller — Passenger Side"
+        j1939_sa: 237
+        function: "Window, mirror, lock, door-ajar for passenger door"
+        local_wire_length_m: 1.2
+
+      - id: TCO
+        name: "Tachograph"
+        j1939_sa: 238
+        function: "Records driver hours, speed, distance for regulatory compliance"
+        local_wire_length_m: 0.5
+
+  - name: "Front Zone"
+    id: FRZ
+    location: "Front fascia, bumper, hood area"
+    zone_controller: "ZC-FR"
+    ecus:
+      - id: MPC
+        name: "Multi-Purpose Camera"
+        j1939_sa: 128
+        function: "Forward-facing camera for collision avoidance and lane departure"
+        local_wire_length_m: 0.5
+
+      - id: ONGUARD
+        name: "OnGuard Headway / Collision Controller"
+        j1939_sa: 47
+        function: "Radar-based adaptive cruise and emergency braking"
+        local_wire_length_m: 0.8
+
+      - id: SAS
+        name: "Steering Angle Sensor"
+        j1939_sa: 19
+        function: "Reports steering wheel angle to ABS for stability control"
+        local_wire_length_m: 0.6
+
+      - id: CTP
+        name: "Common Telematics Platform"
+        j1939_sa: 83
+        function: "Cellular connectivity, fleet telematics, OTA updates"
+        local_wire_length_m: 0.8
+
+# Logical connections — which ECUs need to exchange data
+# In legacy architecture, each = one dedicated wire run across the truck
+# In zonal architecture, each = messages routed through zone controllers + backbone
+connections:
+  # Powertrain data to cab display
+  - from: MCM
+    to: ICU
+    signal: "Engine RPM, coolant temp, oil pressure → dashboard gauges"
+  - from: CPC
+    to: ICU
+    signal: "Vehicle speed, fuel level, DPF status → dashboard"
+  - from: ACM
+    to: ICU
+    signal: "DEF level, aftertreatment warnings → dashboard"
+  - from: TCM
+    to: ICU
+    signal: "Gear position, transmission temp → dashboard"
+
+  # Powertrain internal coordination
+  - from: MCM
+    to: CPC
+    signal: "Engine torque, speed data"
+  - from: CPC
+    to: TCM
+    signal: "Engine torque request for gear shift coordination"
+  - from: MCM
+    to: ACM
+    signal: "Exhaust temp, engine load → aftertreatment control"
+
+  # Safety and chassis coordination
+  - from: ABS
+    to: ICU
+    signal: "ABS active warning, ESC intervention status"
+  - from: ABS
+    to: CPC
+    signal: "Wheel speed → traction control torque reduction"
+  - from: ABS
+    to: ONGUARD
+    signal: "Wheel speed, brake status → collision avoidance"
+  - from: ECAS
+    to: ICU
+    signal: "Suspension height, leveling status"
+  - from: TPMS
+    to: ICU
+    signal: "Tire pressure warnings per axle"
+  - from: SAS
+    to: ABS
+    signal: "Steering angle → electronic stability control input"
+
+  # Cab and door systems
+  - from: DCMD
+    to: SAM_CAB
+    signal: "Driver door ajar, window position"
+  - from: DCMP
+    to: SAM_CAB
+    signal: "Passenger door ajar, window position"
+  - from: SAM_CAB
+    to: ICU
+    signal: "Door warning status, cab switch states"
+  - from: FCU
+    to: ICU
+    signal: "Cab temperature, HVAC mode display"
+  - from: MSF
+    to: CPC
+    signal: "Cruise control on/off, speed set commands"
+
+  # Safety
+  - from: SRS
+    to: ICU
+    signal: "Airbag fault warning"
+
+  # Front zone to cab
+  - from: MPC
+    to: ICU
+    signal: "Lane departure alert, camera feed"
+  - from: ONGUARD
+    to: ICU
+    signal: "Headway distance, collision warning"
+  - from: ONGUARD
+    to: CPC
+    signal: "Emergency brake request"
+  - from: CTP
+    to: CGW
+    signal: "OTA data, fleet telemetry uplink"
+
+  # Gateway
+  - from: CGW
+    to: SAM_CAB
+    signal: "Cross-network signal bridging"
+  - from: CGW
+    to: SAM_CHASSIS
+    signal: "Chassis network bridging"
