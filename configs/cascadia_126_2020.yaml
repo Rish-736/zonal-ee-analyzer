@@ -180,16 +180,16 @@ connections:
   # Powertrain data to cab display
   - from: MCM
     to: ICU
-    signal: "Engine RPM, coolant temp, oil pressure → dashboard gauges"
+    signal: "Engine RPM, coolant temp, oil pressure -> dashboard gauges"
   - from: CPC
     to: ICU
-    signal: "Vehicle speed, fuel level, DPF status → dashboard"
+    signal: "Vehicle speed, fuel level, DPF status -> dashboard"
   - from: ACM
     to: ICU
-    signal: "DEF level, aftertreatment warnings → dashboard"
+    signal: "DEF level, aftertreatment warnings -> dashboard"
   - from: TCM
     to: ICU
-    signal: "Gear position, transmission temp → dashboard"
+    signal: "Gear position, transmission temp -> dashboard"
 
   # Powertrain internal coordination
   - from: MCM
@@ -200,7 +200,7 @@ connections:
     signal: "Engine torque request for gear shift coordination"
   - from: MCM
     to: ACM
-    signal: "Exhaust temp, engine load → aftertreatment control"
+    signal: "Exhaust temp, engine load -> aftertreatment control"
 
   # Safety and chassis coordination
   - from: ABS
@@ -208,10 +208,10 @@ connections:
     signal: "ABS active warning, ESC intervention status"
   - from: ABS
     to: CPC
-    signal: "Wheel speed → traction control torque reduction"
+    signal: "Wheel speed -> traction control torque reduction"
   - from: ABS
     to: ONGUARD
-    signal: "Wheel speed, brake status → collision avoidance"
+    signal: "Wheel speed, brake status -> collision avoidance"
   - from: ECAS
     to: ICU
     signal: "Suspension height, leveling status"
@@ -220,7 +220,7 @@ connections:
     signal: "Tire pressure warnings per axle"
   - from: SAS
     to: ABS
-    signal: "Steering angle → electronic stability control input"
+    signal: "Steering angle -> electronic stability control input"
 
   # Cab and door systems
   - from: DCMD

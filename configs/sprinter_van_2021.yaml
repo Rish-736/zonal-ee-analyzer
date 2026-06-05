@@ -1,0 +1,128 @@
+# Mercedes-Benz Sprinter 519 CDI (2021) — Light Commercial Van
+# Representative ECU configuration for a 3.5t delivery van
+# Source: Mercedes-Benz XENTRY diagnostics module list (public service docs)
+# Chassis length approx 5.5m (short wheelbase variant)
+# Included for scale comparison — demonstrates zonal benefit threshold
+
+metadata:
+  truck_model: "Mercedes-Benz Sprinter 519 CDI (2021)"
+  total_ecus: 12
+  source: "Mercedes-Benz XENTRY public diagnostic documentation"
+  notes: "Light commercial van — minimal ECU count, single CAN backbone"
+
+zone_distances:
+  ptz_to_chz: 2.0
+  chz_to_cbz: 1.5
+  cbz_to_frz: 1.0
+  ptz_to_cbz: 3.5
+  ptz_to_frz: 4.5
+  chz_to_frz: 2.5
+  cbz_to_chz: 1.5
+
+zones:
+  - name: "Powertrain Zone"
+    id: PTZ
+    location: "Engine bay — front of van"
+    zone_controller: "ZC-PT"
+    ecus:
+      - id: ECM
+        name: "Engine Control Module"
+        j1939_sa: 0
+        function: "OM651 diesel engine management"
+        local_wire_length_m: 0.5
+
+      - id: TCU
+        name: "Transmission Control Unit"
+        j1939_sa: 3
+        function: "7G-Tronic automatic transmission"
+        local_wire_length_m: 0.8
+
+  - name: "Chassis Zone"
+    id: CHZ
+    location: "Underbody and rear axle area"
+    zone_controller: "ZC-CH"
+    ecus:
+      - id: ABS_ESP
+        name: "ABS / ESP Controller"
+        j1939_sa: 11
+        function: "Anti-lock braking and stability program"
+        local_wire_length_m: 0.8
+
+      - id: EPS
+        name: "Electric Power Steering Controller"
+        j1939_sa: 19
+        function: "Variable assist electric steering"
+        local_wire_length_m: 0.6
+
+  - name: "Cab Zone"
+    id: CBZ
+    location: "Driver cab and dashboard"
+    zone_controller: "ZC-CAB"
+    ecus:
+      - id: IC
+        name: "Instrument Cluster"
+        j1939_sa: 23
+        function: "Driver display — speed, warnings, fuel"
+        local_wire_length_m: 0.4
+
+      - id: BCM
+        name: "Body Control Module"
+        j1939_sa: 33
+        function: "Lighting, windows, central locking, wipers"
+        local_wire_length_m: 0.5
+
+      - id: HVAC
+        name: "Climate Control Module"
+        j1939_sa: 25
+        function: "Cab heating and air conditioning"
+        local_wire_length_m: 0.6
+
+      - id: ACM_AIR
+        name: "Airbag Control Module"
+        j1939_sa: 127
+        function: "Airbag deployment and pretensioners"
+        local_wire_length_m: 0.5
+
+      - id: TCO
+        name: "Tachograph"
+        j1939_sa: 238
+        function: "Driver hours and speed recording"
+        local_wire_length_m: 0.4
+
+  - name: "Front Zone"
+    id: FRZ
+    location: "Front bumper and grille area"
+    zone_controller: "ZC-FR"
+    ecus:
+      - id: FCM
+        name: "Forward Collision Module"
+        j1939_sa: 47
+        function: "Autonomous emergency braking"
+        local_wire_length_m: 0.6
+
+      - id: LDW
+        name: "Lane Departure Warning Camera"
+        j1939_sa: 128
+        function: "Forward camera for lane keeping assist"
+        local_wire_length_m: 0.5
+
+      - id: TLM
+        name: "Telematics Module"
+        j1939_sa: 83
+        function: "Fleet tracking and remote diagnostics"
+        local_wire_length_m: 0.7
+
+connections:
+  - {from: ECM,     to: IC,      signal: "Engine RPM, coolant temp, oil pressure"}
+  - {from: ECM,     to: TCU,     signal: "Engine torque for gear coordination"}
+  - {from: TCU,     to: IC,      signal: "Gear position display"}
+  - {from: ABS_ESP, to: IC,      signal: "ABS and ESP warning lights"}
+  - {from: ABS_ESP, to: ECM,     signal: "Wheel speed for traction control"}
+  - {from: EPS,     to: ABS_ESP, signal: "Steering angle for ESP"}
+  - {from: BCM,     to: IC,      signal: "Door status, lighting faults"}
+  - {from: HVAC,    to: IC,      signal: "Temperature display"}
+  - {from: ACM_AIR, to: IC,      signal: "Airbag fault warning"}
+  - {from: FCM,     to: IC,      signal: "Collision warning display"}
+  - {from: FCM,     to: ECM,     signal: "Emergency brake request"}
+  - {from: LDW,     to: IC,      signal: "Lane departure alert"}
+  - {from: TLM,     to: BCM,     signal: "Remote diagnostics and fleet data"}

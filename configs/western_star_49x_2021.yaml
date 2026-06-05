@@ -1,0 +1,167 @@
+# Western Star 49X (2021) — Vocational Class 8 Truck
+# ECU list sourced from DTNA SS-1033423 (shared DTNA platform with Cascadia)
+# Western Star 49X is a vocational/construction-spec truck — fewer comfort
+# ECUs, additional axle and PTO control modules vs Cascadia
+# Chassis length approx 7.5m (shorter than Cascadia day-cab configuration)
+
+metadata:
+  truck_model: "Western Star 49X (2021)"
+  total_ecus: 17
+  source: "DTNA SS-1033423, Western Star Bodybuilder Manual Rev 3.1"
+  notes: "Vocational spec — no sleeper, no tachograph, adds PTO and axle lock"
+
+zone_distances:
+  ptz_to_chz: 2.5
+  chz_to_cbz: 2.0
+  cbz_to_frz: 1.5
+  ptz_to_cbz: 4.5
+  ptz_to_frz: 6.0
+  chz_to_frz: 3.5
+  cbz_to_chz: 2.0
+
+zones:
+  - name: "Powertrain Zone"
+    id: PTZ
+    location: "Engine compartment"
+    zone_controller: "ZC-PT"
+    ecus:
+      - id: MCM
+        name: "Motor Control Module"
+        j1939_sa: 1
+        function: "Detroit DD13 engine control"
+        local_wire_length_m: 0.5
+
+      - id: ACM
+        name: "Aftertreatment Control Module"
+        j1939_sa: 61
+        function: "DEF injection and DPF regeneration"
+        local_wire_length_m: 0.8
+
+      - id: CPC
+        name: "Common Powertrain Controller"
+        j1939_sa: 0
+        function: "Powertrain coordinator and CAN bridge"
+        local_wire_length_m: 0.6
+
+      - id: TCM
+        name: "Transmission Control Module"
+        j1939_sa: 3
+        function: "Allison or DT12 transmission control"
+        local_wire_length_m: 1.2
+
+      - id: PTO
+        name: "Power Take-Off Controller"
+        j1939_sa: 32
+        function: "Controls hydraulic PTO for vocational equipment"
+        local_wire_length_m: 1.0
+
+  - name: "Chassis Zone"
+    id: CHZ
+    location: "Frame rails and tandem axle area"
+    zone_controller: "ZC-CH"
+    ecus:
+      - id: ABS
+        name: "ABS / Stability Controller"
+        j1939_sa: 11
+        function: "Anti-lock braking and stability control"
+        local_wire_length_m: 1.0
+
+      - id: AXLE
+        name: "Tandem Axle Lock Controller"
+        j1939_sa: 48
+        function: "Controls inter-axle and cross-axle differential locks"
+        local_wire_length_m: 1.5
+
+      - id: TPMS
+        name: "Tire Pressure Monitoring System"
+        j1939_sa: 58
+        function: "Monitors all axle tire pressures"
+        local_wire_length_m: 1.0
+
+      - id: SAM_CH
+        name: "Signal Acquisition Module — Chassis"
+        j1939_sa: 74
+        function: "Chassis I/O, marker lights, frame sensors"
+        local_wire_length_m: 0.5
+
+  - name: "Cab Zone"
+    id: CBZ
+    location: "Day cab interior and dash"
+    zone_controller: "ZC-CAB"
+    ecus:
+      - id: ICU
+        name: "Instrument Cluster Unit"
+        j1939_sa: 23
+        function: "Driver display — speed, RPM, warnings, gauges"
+        local_wire_length_m: 0.5
+
+      - id: CGW
+        name: "Central Gateway"
+        j1939_sa: 42
+        function: "Bridges Powertrain CAN, Chassis CAN, Cabin CAN"
+        local_wire_length_m: 0.3
+
+      - id: SAM_CAB
+        name: "Signal Acquisition Module — Cab"
+        j1939_sa: 37
+        function: "Cab I/O, switches, interior lighting"
+        local_wire_length_m: 0.5
+
+      - id: FCU
+        name: "HVAC Climate Control Unit"
+        j1939_sa: 25
+        function: "Cab heating and air conditioning"
+        local_wire_length_m: 0.8
+
+      - id: MSF
+        name: "Modular Switch Field"
+        j1939_sa: 51
+        function: "Steering column switches and dash inputs"
+        local_wire_length_m: 0.4
+
+  - name: "Front Zone"
+    id: FRZ
+    location: "Front fascia and bumper"
+    zone_controller: "ZC-FR"
+    ecus:
+      - id: ONGUARD
+        name: "OnGuard Collision Controller"
+        j1939_sa: 47
+        function: "Radar adaptive cruise and emergency braking"
+        local_wire_length_m: 0.8
+
+      - id: SAS
+        name: "Steering Angle Sensor"
+        j1939_sa: 19
+        function: "Steering angle input to ABS for ESC"
+        local_wire_length_m: 0.6
+
+      - id: CTP
+        name: "Common Telematics Platform"
+        j1939_sa: 83
+        function: "Fleet telematics and OTA updates"
+        local_wire_length_m: 0.8
+
+connections:
+  - {from: MCM, to: ICU,      signal: "Engine RPM, coolant temp, oil pressure"}
+  - {from: CPC, to: ICU,      signal: "Vehicle speed, fuel level, DPF status"}
+  - {from: ACM, to: ICU,      signal: "DEF level, aftertreatment warnings"}
+  - {from: TCM, to: ICU,      signal: "Gear position, transmission temp"}
+  - {from: MCM, to: CPC,      signal: "Engine torque and speed data"}
+  - {from: CPC, to: TCM,      signal: "Torque request for gear shifts"}
+  - {from: MCM, to: ACM,      signal: "Exhaust temp and engine load"}
+  - {from: PTO, to: CPC,      signal: "PTO engagement status and speed request"}
+  - {from: PTO, to: ICU,      signal: "PTO active warning and RPM display"}
+  - {from: ABS, to: ICU,      signal: "ABS warning and ESC status"}
+  - {from: ABS, to: CPC,      signal: "Wheel speed for traction control"}
+  - {from: ABS, to: ONGUARD,  signal: "Wheel speed and brake status"}
+  - {from: AXLE, to: ICU,     signal: "Axle lock status indicator"}
+  - {from: AXLE, to: ABS,     signal: "Differential lock state for ESC"}
+  - {from: TPMS, to: ICU,     signal: "Tire pressure warnings"}
+  - {from: SAS, to: ABS,      signal: "Steering angle for stability control"}
+  - {from: MSF, to: CPC,      signal: "Cruise control commands"}
+  - {from: ONGUARD, to: ICU,  signal: "Collision warning and headway distance"}
+  - {from: ONGUARD, to: CPC,  signal: "Emergency brake request"}
+  - {from: CGW, to: SAM_CAB,  signal: "Cross-network signal bridging"}
+  - {from: CGW, to: SAM_CH,   signal: "Chassis network bridging"}
+  - {from: CTP, to: CGW,      signal: "Fleet telemetry uplink"}
