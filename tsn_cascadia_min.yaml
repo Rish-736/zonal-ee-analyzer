@@ -1,0 +1,21 @@
+# Stage-2 input schema (extends the analyzer's zonal topology with timing + traffic)
+# The analyzer already knows the zones/ECUs. This adds two new things:
+#   1. link timing attributes (rate_mbps, delay_us) on the Ethernet/CAN backbone
+#   2. a `streams` block: the real-time traffic the network must carry
+
+network:
+  links:
+    # central TSN switch <-> zone controllers (1 Gbps backbone)
+    - {src: central_sw, dst: zc_pt,  rate_mbps: 1000, delay_us: 5}
+    - {src: central_sw, dst: zc_ch,  rate_mbps: 1000, delay_us: 5}
+    - {src: central_sw, dst: zc_cab, rate_mbps: 1000, delay_us: 5}
+    # zone controllers <-> ECUs (100 Mbps edge links)
+    - {src: zc_pt,  dst: ecu_mcm, rate_mbps: 100, delay_us: 8}   # engine ctrl (powertrain)
+    - {src: zc_ch,  dst: ecu_ebs, rate_mbps: 100, delay_us: 8}   # brakes (chassis)
+    - {src: zc_cab, dst: ecu_icu, rate_mbps: 100, delay_us: 8}   # cluster (cab)
+
+streams:
+  # brake command: powertrain ECU -> central switch -> chassis ECU. Tight deadline.
+  - {id: brake_cmd,    src: ecu_mcm, dst: ecu_ebs, period_ms: 10, payload_bytes: 64,   deadline_ms: 2,  priority: 7}
+  # infotainment sync: large, frequent, relaxed deadline (the "best-effort" pressure)
+  - {id: infotainment, src: ecu_icu, dst: ecu_mcm, period_ms: 40, payload_bytes: 1200, deadline_ms: 30, priority: 1}

@@ -1,0 +1,71 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# TSN Extension — Western Star 49X (2021) Vocational Class 8 Truck
+# Extends western_star_49x_2021.yaml with timing + traffic for Stage 2 sim
+#
+# Key differences vs Cascadia:
+#   - Shorter chassis (7.5m vs 13m) → lower propagation delays on backbone
+#   - PTO controller added (vocational-specific)
+#   - No sleeper ECUs → fewer background streams
+#   - Tandem axle lock adds a second safety-critical stream
+# ─────────────────────────────────────────────────────────────────────────────
+
+tsn:
+  links:
+    # Backbone: central switch <-> zone controllers (1 Gbps)
+    - {src: central_sw,   dst: zc_pt,    rate_mbps: 1000, delay_us: 4}
+    - {src: central_sw,   dst: zc_ch,    rate_mbps: 1000, delay_us: 4}
+    - {src: central_sw,   dst: zc_cb,    rate_mbps: 1000, delay_us: 4}
+    - {src: central_sw,   dst: adas_unit, rate_mbps: 1000, delay_us: 4}
+
+    # Edge links: zone controllers <-> ECUs (100 Mbps)
+    - {src: zc_pt,  dst: ecu_mcm,  rate_mbps: 100, delay_us: 6}
+    - {src: zc_pt,  dst: ecu_pto,  rate_mbps: 100, delay_us: 6}
+    - {src: zc_ch,  dst: ecu_abs,  rate_mbps: 100, delay_us: 6}
+    - {src: zc_ch,  dst: ecu_axl,  rate_mbps: 100, delay_us: 6}
+    - {src: zc_cb,  dst: ecu_icu,  rate_mbps: 100, delay_us: 6}
+
+  streams:
+    - id: brake_cmd
+      src: ecu_mcm
+      dst: ecu_abs
+      period_ms: 10
+      payload_bytes: 64
+      deadline_ms: 2
+      priority: 7
+      note: "ASIL-D — air brake command"
+
+    - id: axle_lock_cmd
+      src: ecu_mcm
+      dst: ecu_axl
+      period_ms: 20
+      payload_bytes: 32
+      deadline_ms: 3
+      priority: 7
+      note: "Tandem axle lock/unlock — vocational safety command"
+
+    - id: pto_status
+      src: ecu_pto
+      dst: ecu_mcm
+      period_ms: 50
+      payload_bytes: 48
+      deadline_ms: 10
+      priority: 5
+      note: "PTO engage/speed feedback"
+
+    - id: cluster_update
+      src: ecu_mcm
+      dst: ecu_icu
+      period_ms: 100
+      payload_bytes: 256
+      deadline_ms: 80
+      priority: 1
+      note: "Instrument cluster display refresh"
+
+    - id: adas_flood
+      src: adas_unit
+      dst: ecu_abs
+      period_ms: 0.1
+      payload_bytes: 1500
+      deadline_ms: 50
+      priority: 0
+      note: "ADAS perception — overloads chassis link"

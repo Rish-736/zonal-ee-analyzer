@@ -1,0 +1,68 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# TSN Extension for Freightliner Cascadia 126
+# Add this block to your existing cascadia_126_2020.yaml
+# Stage 1 (analyzer) reads everything above. Stage 2 (TSN sim) reads this.
+# ─────────────────────────────────────────────────────────────────────────────
+
+tsn:
+  # Timing attributes for the zonal Ethernet backbone links
+  # Node IDs must match the zone controllers already in your graph.py
+  links:
+    - {src: central_sw,  dst: zc_powertrain,  rate_mbps: 1000, delay_us: 5}
+    - {src: central_sw,  dst: zc_chassis,     rate_mbps: 1000, delay_us: 5}
+    - {src: central_sw,  dst: zc_cab,         rate_mbps: 1000, delay_us: 5}
+    - {src: central_sw,  dst: zc_trailer,     rate_mbps: 1000, delay_us: 5}
+    - {src: zc_powertrain, dst: ecu_mcm,      rate_mbps: 100,  delay_us: 8}
+    - {src: zc_chassis,    dst: ecu_ebs,      rate_mbps: 100,  delay_us: 8}
+    - {src: zc_chassis,    dst: ecu_abs,      rate_mbps: 100,  delay_us: 8}
+    - {src: zc_cab,        dst: ecu_icu,      rate_mbps: 100,  delay_us: 8}
+    - {src: zc_trailer,    dst: ecu_tbc,      rate_mbps: 100,  delay_us: 8}
+    - {src: central_sw,    dst: adas_unit,    rate_mbps: 1000, delay_us: 5}
+
+  # Real-time traffic streams the network must carry
+  # priority 7 = highest (safety), 0 = lowest (best-effort)
+  streams:
+    - id: brake_cmd
+      src: ecu_mcm
+      dst: ecu_ebs
+      period_ms: 10
+      payload_bytes: 64
+      deadline_ms: 2
+      priority: 7
+      note: "ASIL-D safety critical — air brake command"
+
+    - id: abs_status
+      src: ecu_abs
+      dst: ecu_mcm
+      period_ms: 10
+      payload_bytes: 32
+      deadline_ms: 2
+      priority: 7
+      note: "ABS feedback to powertrain"
+
+    - id: engine_torque
+      src: ecu_mcm
+      dst: ecu_tbc
+      period_ms: 20
+      payload_bytes: 64
+      deadline_ms: 5
+      priority: 5
+      note: "Engine torque demand to trailer brake controller"
+
+    - id: infotainment
+      src: ecu_icu
+      dst: ecu_mcm
+      period_ms: 40
+      payload_bytes: 1200
+      deadline_ms: 30
+      priority: 1
+      note: "Driver cluster display sync"
+
+    - id: adas_flood
+      src: adas_unit
+      dst: ecu_ebs
+      period_ms: 0.1
+      payload_bytes: 1500
+      deadline_ms: 50
+      priority: 0
+      note: "ADAS perception data — best effort, congests chassis link"

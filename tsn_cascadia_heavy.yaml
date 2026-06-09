@@ -1,0 +1,20 @@
+# The brake command and a heavy ADAS/perception stream both have to cross the
+# SAME congested 100 Mbps link into the chassis zone (zc_ch -> ecu_ebs).
+# The ADAS stream enters on a fast 1 Gbps backbone link, so it genuinely
+# floods that shared chokepoint -> the brake gets stuck behind it.
+
+network:
+  links:
+    - {src: central_sw, dst: zc_pt,  rate_mbps: 1000, delay_us: 5}
+    - {src: central_sw, dst: zc_ch,  rate_mbps: 1000, delay_us: 5}
+    - {src: central_sw, dst: zc_cab, rate_mbps: 1000, delay_us: 5}
+    - {src: central_sw, dst: adas,   rate_mbps: 1000, delay_us: 5}   # fast ADAS feed
+    - {src: zc_pt,  dst: ecu_mcm, rate_mbps: 100, delay_us: 8}
+    - {src: zc_ch,  dst: ecu_ebs, rate_mbps: 100, delay_us: 8}        # <-- shared chokepoint
+    - {src: zc_cab, dst: ecu_icu, rate_mbps: 100, delay_us: 8}
+
+streams:
+  - {id: brake_cmd,    src: ecu_mcm, dst: ecu_ebs, period_ms: 10,  payload_bytes: 64,   deadline_ms: 2,  priority: 7}
+  - {id: infotainment, src: ecu_icu, dst: ecu_mcm, period_ms: 40,  payload_bytes: 1200, deadline_ms: 30, priority: 1}
+  # ADAS perception flood: fast entry, then crowds the brake's chassis link
+  - {id: adas_flood,   src: adas,    dst: ecu_ebs, period_ms: 0.1, payload_bytes: 1500, deadline_ms: 50, priority: 0}

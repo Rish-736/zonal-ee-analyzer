@@ -2,6 +2,8 @@
 Zonal E/E Architecture — PDF Report Generator v3
 Includes three-way zone assignment comparison (Section 5 new)
 """
+import yaml
+from tsn.pdf_section import build_tsn_section
 import sys, os, io, math, struct
 sys.path.insert(0, 'src')
 import matplotlib
@@ -690,6 +692,16 @@ def build_pdf_report(all_truck_data,all_metrics,all_opts,all_legacies,
         txt=lim[7:].strip() if lim.startswith('LIM_') else lim
         story.append(Paragraph(f"\u2022  {txt}",styles['BulletItem'])); story+=[sp(3)]
     story+=[sp(6),pb()]
+    
+# ── STAGE 2: TSN SIMULATION SECTION ──────────────────────────
+    try:
+        import yaml
+        with open("configs/cascadia_tsn_extension.yaml") as f:
+            tsn_raw = yaml.safe_load(f)
+        tsn_cfg = tsn_raw.get("tsn", tsn_raw)
+        story += build_tsn_section(tsn_cfg, styles)
+    except Exception as e:
+        print(f"[TSN section skipped: {e}]")
 
     # ── SECTION 11: METHODOLOGY ───────────────────────────────────────
     story.append(Paragraph("9. Methodology and Data Sources",styles['SectionHead'])); story.append(hr())
